@@ -1,7 +1,7 @@
 // noinspection ES6PreferShortImport
 
 import { TAgent, IMessageHandler, ICredentialPlugin, IDIDManager, IKeyManager, IDataStore, IDataStoreORM, IResolver } from '@veramo/core-types'
-import { createMLTextGenerationPromptMessage } from '../../src/message-handler/ml-text-generation-message-handler.js'
+import { createBrainSharePostMessage } from '../../src/message-handler/brainshare-message-handler.js'
 import { IDIDComm } from '@veramo/did-comm'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { MessagingRouter, RequestWithAgentRouter } from '@veramo/remote-server'
@@ -13,7 +13,9 @@ type ConfiguredAgent = TAgent<
   IKeyManager & 
   IDIDComm & 
   ICredentialPlugin &
-  IMessageHandler
+  IMessageHandler &
+  IDataStore &
+  IDataStoreORM
 >
 
 export default (testContext: {
@@ -82,10 +84,25 @@ export default (testContext: {
         }
       })
 
-      const questionMessage = createMLTextGenerationPromptMessage("What is rice?", sender.did, receiver.did, "thid1", false)
+      const post = await agent.createVerifiableCredential({
+        credential: {
+          issuer: { id: sender.did },
+          '@context': ['https://www.w3.org/2018/credentials/v1'],
+          type: ['VerifiableCredential', 'BrainSharePost'],
+          issuanceDate: new Date().toISOString(),
+          credentialSubject: {
+            post: 'Whatever dude!',
+          },
+        },
+        proofFormat: 'jwt'
+      })
+      const postMessage = createBrainSharePostMessage(post, sender.did, receiver.did)
+
+      const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+
       const packed = await agent.packDIDCommMessage({
         packing: 'authcrypt',
-        message: questionMessage
+        message: postMessage
       })
 
       // const res = await agent.handleMessage({ raw: packed.message })
@@ -98,56 +115,11 @@ export default (testContext: {
       })
       console.log("res: ", res)
       
-      expect(res).toBeDefined()
-    })
+      const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
 
-    it('should correctly send when sender has no service endpoint', async () => {
-      const sender2 = await agent.didManagerCreate({
-        "alias": "sender2",
-        "provider": "did:peer",
-        "kms": "local",
-        "options": {
-          "num_algo":2,
-          "service": {
-            "id": "badid123",
-            "type": "nothing",
-            "serviceEndpoint": "http://doesnwork",
-            "description": "will not work"
-          }
-        }
-      })
-      const receiver2 = await agent.didManagerCreate({
-        "alias": "receiver2",
-        "provider": "did:peer",
-        "kms": "local",
-        "options": {
-          "num_algo":2 , 
-          "service" : {
-            "id":"123456",
-            "type":"DIDCommMessaging",
-            "serviceEndpoint":`http://localhost:${listeningPort}/messaging`,
-            "description":"an endpoint"
-          }
-        }
-      })
-
-      const questionMessage = createMLTextGenerationPromptMessage("What is corn?", sender2.did, receiver2.did, "thid2", true)
-      const packed = await agent.packDIDCommMessage({
-        packing: 'authcrypt',
-        message: questionMessage
-      })
-
-      // const res = await agent.handleMessage({ raw: packed.message })
-      // console.log("res: ", res)
-
-      const res2 = await agent.sendDIDCommMessage({ 
-        messageId: 'somefakeid2', 
-        packedMessage: packed, 
-        recipientDidUrl: receiver2.did
-      })
-      console.log("res2: ", res2)
+      expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
       
-      expect(res2).toBeDefined()
+      expect(res).toBeDefined()
     })
   })
 }

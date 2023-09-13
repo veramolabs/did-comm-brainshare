@@ -1,4 +1,4 @@
 /**
  * @public
  */
-export * from './message-handler/ml-text-generation-message-handler.js'
+export * from './message-handler/brainshare-message-handler.js'
