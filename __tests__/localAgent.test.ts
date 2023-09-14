@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 jest.setTimeout(30000)
 
 // Shared tests
-import myPluginLogic from './shared/myPluginLogic.js'
+import myPluginLogic from './shared/myPluginLogic'
 // import myPluginEventsLogic from './shared/myPluginEventsLogic'
 
 let dbConnection: DataSource

@@ -14,7 +14,7 @@
     "start": "veramo server",
     "build:watch": "tsc -b --watch",
     "test:ci": "yarn test --coverage=true",
-    "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --experimental-import-meta-resolve\" jest",
+    "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --experimental-import-meta-resolve\" jest --config=jest.config.mjs",
     "test:watch": "yarn test --watch --verbose",
     "clean": "rm -rf tmp && rm database.sqlite && rm -rf build && rm tsconfig.tsbuildinfo"
   },

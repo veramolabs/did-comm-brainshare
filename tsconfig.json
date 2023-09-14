@@ -1,17 +1,30 @@
 {
   "compilerOptions": {
-    "strict": false,
+    "strict": true,
     "preserveConstEnums": true,
     "sourceMap": true,
-    "target": "ESNext",
+    "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "declaration": true,
+    "downlevelIteration": true,
     "declarationMap": true,
+    "declaration": true,
+    "composite": true,
+    "emitDecoratorMetadata": true,
+    "useUnknownInCatchVariables": false,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "rootDir": "src",
     "outDir": "build",
-    "skipLibCheck": true
+    "declarationDir": "build",
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
   },
   "exclude": [
     "**/__tests__/**/*",

@@ -161,7 +161,7 @@ messageHandler:
         - $require: '@veramo/did-jwt#JwtMessageHandler'
         - $require: '@veramo/credential-w3c#W3cMessageHandler'
         - $require: '@veramo/selective-disclosure#SdrMessageHandler'
-        - $require: './build#MLTextGenerationPromptMessageHandler'
+        - $require: './build#BrainShareMessageHandler'
           $args: 
             - hfToken: 
               $ref: /constants/huggingFaceToken
@@ -177,8 +177,6 @@ didResolver:
               $ref: /ethr-did-resolver
             web:
               $ref: /web-did-resolver
-            key:
-              $ref: /did-key-resolver
             peer:
               $ref: /did-peer-resolver
             elem:
@@ -202,9 +200,6 @@ universal-resolver:
   $require: '@veramo/did-resolver#UniversalResolver'
   $args:
     - url: https://dev.uniresolver.io/1.0/identifiers/
-
-did-key-resolver:
-  $require: '@veramo/did-provider-key?t=function&p=/key#getDidKeyResolver'
 
 did-peer-resolver:
   $require: '@veramo/did-provider-peer?t=function&p=/peer#getResolver'
