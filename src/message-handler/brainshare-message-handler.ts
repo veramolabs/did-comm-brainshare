@@ -74,7 +74,6 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
    */
   public async handle(message: Message, context: IContext): Promise<Message> {
     if (message.type === BRAINSHARE_POST_MESSAGE_TYPE) {
-      console.log("yes is type.")
       debug('BrainShare Post Message Received')
       try {
         const { from, to, data } = message
@@ -88,12 +87,9 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
           throw new Error("invalid_argument: BrainShare Message received without `body.post` set")
         }
 
-        console.log("go to verify.")
         const verificationResult = await context.agent.verifyCredential({ credential: data.post })
-        console.log("data.post: ", data.post)
-        console.log("verificationResult: ", verificationResult)
         if (verificationResult.verified) {
-          console.log("yes is verified.")
+          debug("BrainShare Post Message Verified.")
           // TODO: check type, other things
           await context.agent.dataStoreSaveVerifiableCredential({ verifiableCredential: data.post })
         }
@@ -103,6 +99,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         debug(ex)
       }
       // return message
+      return message
     } else if (message.type === BRAINSHARE_CHECK_DOMAIN_LINKAGE_MESSAGE_TYPE) {
       const { from, to, data } = message
       if (!from) {
@@ -137,6 +134,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
 
         await context.agent.dataStoreSaveVerifiableCredential({ verifiableCredential: cred })
       }
+      return message
     }
 
     return super.handle(message, context)

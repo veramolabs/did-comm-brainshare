@@ -1,6 +1,6 @@
 {
   "name": "did-comm-brainshare",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "source": "src/index.ts",
   "main": "build/index.js",
   "exports": {
@@ -29,8 +29,10 @@
     "@veramo/credential-w3c": "5.4.1",
     "@veramo/data-store": "5.4.1",
     "@veramo/did-jwt": "5.4.1",
+    "@veramo/did-manager": "5.4.1",
     "@veramo/did-provider-peer": "5.4.1",
     "@veramo/did-resolver": "5.4.1",
+    "@veramo/key-manager": "5.4.1",
     "@veramo/kms-local": "5.4.1",
     "@veramo/remote-server": "5.4.1",
     "cross-env": "^7.0.3",
@@ -50,11 +52,10 @@
   "dependencies": {
     "@veramo/core-types": "5.4.1",
     "@veramo/did-comm": "5.4.1",
-    "@veramo/did-manager": "5.4.1",
-    "@veramo/key-manager": "5.4.1",
     "@veramo/message-handler": "5.4.1",
     "debug": "^4.3.4",
     "dns": "^0.2.2",
+    "jest-config": "^29.7.0",
     "uuid": "^9.0.0"
   }
 }
