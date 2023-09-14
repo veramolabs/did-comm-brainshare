@@ -1,3 +1,5 @@
+// noinspection ES6PreferShortImport
+
 import { getConfig } from '@veramo/cli/build/setup'
 import { createObjects } from '@veramo/cli/build/lib/objectCreator'
 import { DataSource } from 'typeorm'
@@ -7,7 +9,7 @@ import { jest } from '@jest/globals'
 jest.setTimeout(30000)
 
 // Shared tests
-import myPluginLogic from './shared/myPluginLogic'
+import myPluginLogic from './shared/myPluginLogic.js'
 // import myPluginEventsLogic from './shared/myPluginEventsLogic'
 
 let dbConnection: DataSource

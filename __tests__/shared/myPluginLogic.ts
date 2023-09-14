@@ -1,12 +1,13 @@
 // noinspection ES6PreferShortImport
 
 import { TAgent, IMessageHandler, ICredentialPlugin, IDIDManager, IKeyManager, IDataStore, IDataStoreORM, IResolver } from '@veramo/core-types'
-import { createBrainSharePostMessage } from '../../src/message-handler/brainshare-message-handler.js'
+import { createBrainSharePostMessage, getTxtRecords } from '../../src/message-handler/brainshare-message-handler.js'
 import { IDIDComm } from '@veramo/did-comm'
 import { ICredentialIssuerLD } from '@veramo/credential-ld'
 import { MessagingRouter, RequestWithAgentRouter } from '@veramo/remote-server'
 import express from 'express'
 import { Server } from 'http'
+import * as dns from 'dns'
 
 type ConfiguredAgent = TAgent<
   IDIDManager & 
@@ -37,6 +38,7 @@ export default (testContext: {
         //setup a server to receive HTTP messages and forward them to this agent to be processed as DIDComm messages
         const app = express()
         // app.use(requestWithAgent)
+        // @ts-ignore
         app.use(
           '/messaging',
           requestWithAgent,
@@ -44,6 +46,7 @@ export default (testContext: {
             metaData: { type: 'DIDComm', value: 'integration test' },
           }),
         )
+        // @ts-ignore
         didCommEndpointServer = app.listen(listeningPort, () => {
           resolve(true)
         })
@@ -120,6 +123,13 @@ export default (testContext: {
       expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
       
       expect(res).toBeDefined()
+    })
+
+    it('should get some DID at DNS', async () => {
+      const records = await getTxtRecords("nickreynolds.online")
+
+      console.log("records: ", records)
+      
     })
   })
 }
