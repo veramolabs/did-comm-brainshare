@@ -262,9 +262,11 @@ describe('brainshare-message-handler', () => {
   })
 
   it('should get some DID at DNS', async () => {
-    const records = await getTxtRecords("nickreynolds.online")
+    const records = await getTxtRecords("_fakeshare.nickreynolds.online")
 
     console.log("records: ", records)
+
+    expect(records[0]).toEqual("did=did:fake:1")
     
   })
 })
