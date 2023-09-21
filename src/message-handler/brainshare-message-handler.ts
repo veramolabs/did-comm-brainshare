@@ -5,7 +5,7 @@ import { v4 } from 'uuid'
 import { DIDCommMessageMediaType, IDIDComm, IDIDCommMessage } from '@veramo/did-comm'
 import * as dns from 'dns'
 
-const debug = Debug('veramo:did-comm:ml-text-generation-message-handler')
+const debug = Debug('veramo:did-comm:brainshare-message-handler')
 
 type IContext = IAgentContext<IDIDManager & IKeyManager & IDIDComm & ICredentialPlugin & IDataStore & IDataStoreORM>
 
@@ -261,11 +261,15 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
       })
       debug("Index Cred: " + indexCred)
       if (indexCred && indexCred.length > 0) {
+        debug("indexCred[0]: " + indexCred[0])
+        debug("JSON.stringify(indexCred[0]): " + JSON.stringify(indexCred[0]))
         const response = createReturnIndexMessage(indexCred[0].verifiableCredential, indexCred[0].hash, to, from, message.id)
+        debug("Response: " + JSON.stringify(response))
         const packedResponse = await context.agent.packDIDCommMessage({
           message: response,
           packing: 'authcrypt',
         })
+        debug("Packed Response: " + JSON.stringify(response))
         const returnResponse = {
           id: response.id,
           message: packedResponse.message,
