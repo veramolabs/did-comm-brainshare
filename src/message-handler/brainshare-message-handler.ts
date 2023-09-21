@@ -229,7 +229,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
 
       const cred = await context.agent.dataStoreGetVerifiableCredential({ hash: data.hash })
       if (cred && cred.credentialSubject.shouldBeIndexed) {
-        const response = createReturnCredentialMessage(cred, from, to, message.id)
+        const response = createReturnCredentialMessage(cred, to, from, message.id)
         const packedResponse = await context.agent.packDIDCommMessage({
           message: response,
           packing: 'authcrypt',
@@ -261,7 +261,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
       })
       debug("Index Cred: " + indexCred)
       if (indexCred && indexCred.length > 0) {
-        const response = createReturnIndexMessage(indexCred[0].verifiableCredential, indexCred[0].hash, from, to, message.id)
+        const response = createReturnIndexMessage(indexCred[0].verifiableCredential, indexCred[0].hash, to, from, message.id)
         const packedResponse = await context.agent.packDIDCommMessage({
           message: response,
           packing: 'authcrypt',
