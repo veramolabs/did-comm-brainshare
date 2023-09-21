@@ -245,6 +245,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
       }
     } else if (message.type === BRAINSHARE_REQUEST_INDEX_MESSAGE_TYPE) {
       const { from, to, returnRoute } = message
+      debug("Index Requested. Recipient: " + to)
       if (!from) {
         throw new Error("invalid_argument: BrainShare Message received without `from` set")
       }
@@ -252,8 +253,9 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         throw new Error("invalid_argument: BrainShare Message received without `to` set")
       }
 
+      const numCreds1  = await context.agent.dataStoreORMGetVerifiableCredentialsCount()
       const indexCred = await context.agent.dataStoreORMGetVerifiableCredentials({
-        where: [{ column: 'issuer', value: [to]}, { column: 'type', value: ['VerifiableCredential', 'BrainShareIndex']}],
+        where: [{ column: 'issuer', value: [to] }, { column: 'type', value: ['VerifiableCredential,BrainShareIndex']}],
         order: [{ column: 'issuanceDate', direction: 'DESC' }],
         take: 1
       })

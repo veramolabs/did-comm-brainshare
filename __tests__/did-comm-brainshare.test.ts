@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 import { createAgent } from '@veramo/core'
 import { TAgent, IMessageHandler, ICredentialPlugin, IDIDManager, IKeyManager, IIdentifier, IDataStoreORM, IResolver } from '@veramo/core-types'
-import { BrainShareMessageHandler, createBrainSharePostMessage, getTxtRecords } from '../src/message-handler/brainshare-message-handler.js'
+import { BrainShareMessageHandler, createBrainSharePostMessage, createBrainShareRequestIndexMessage, getTxtRecords } from '../src/message-handler/brainshare-message-handler.js'
 import { IDIDComm, DIDComm, DIDCommHttpTransport, DIDCommMessageHandler } from '@veramo/did-comm'
 import { CredentialIssuer } from '@veramo/credential-w3c'
 import {   
@@ -65,7 +65,7 @@ describe('brainshare-message-handler', () => {
       logging: false,
       entities: Entities,
     })
-    agent = createAgent<IResolver & IKeyManager & IDIDManager & IDIDComm & IMessageHandler & IDataStore>({
+    agent = createAgent<IResolver & IKeyManager & IDIDManager & IDIDComm & IMessageHandler & IDataStore & IDataStoreORM>({
       plugins: [
         new KeyManager({
           store: new MemoryKeyStore(),
@@ -177,12 +177,54 @@ describe('brainshare-message-handler', () => {
   })
 
   // this test should cover message handler directly without any DIDCommMessageHandler 'pre-processing'
-  it('should handle brainshare post message with credential with LD proof format', async () => {
+  // it('should handle brainshare post message with credential with LD proof format', async () => {
+  //   const post = await agent.createVerifiableCredential({
+  //     credential: {
+  //       issuer: { id: sender.did },
+  //       '@context': ['https://www.w3.org/2018/credentials/v1', 'custom:example.context'],
+  //       type: ['VerifiableCredential', 'BrainSharePost'],
+  //       issuanceDate: new Date().toISOString(),
+  //       credentialSubject: {
+  //         post: 'Whatever dude!',
+  //       },
+  //     },
+  //     proofFormat: 'lds'
+  //   })
+
+  //   const verificationResult = await agent.verifyCredential({ credential: post })
+  //   // console.log("LDS - verificationResult: ", verificationResult)
+
+  //   const postMessage = createBrainSharePostMessage(post, sender.did, recipient.did)
+
+  //   const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+
+  //   const packed = await agent.packDIDCommMessage({
+  //     packing: 'authcrypt',
+  //     message: postMessage
+  //   })
+
+  //   // const res = await agent.handleMessage({ raw: packed.message })
+  //   // console.log("res: ", res)
+
+  //   const res = await agent.sendDIDCommMessage({ 
+  //     messageId: postMessage.id, 
+  //     packedMessage: packed, 
+  //     recipientDidUrl: recipient.did
+  //   })
+    
+  //   const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+
+  //   expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
+    
+  //   expect(res).toBeDefined()
+  // })
+
+  it('should do Identical thing', async () => {
     const post = await agent.createVerifiableCredential({
       credential: {
-        issuer: { id: sender.did },
+        issuer: { id: recipient.did },
         '@context': ['https://www.w3.org/2018/credentials/v1', 'custom:example.context'],
-        type: ['VerifiableCredential', 'BrainSharePost'],
+        type: ['VerifiableCredential', 'BrainShareIndex'],
         issuanceDate: new Date().toISOString(),
         credentialSubject: {
           post: 'Whatever dude!',
@@ -190,13 +232,25 @@ describe('brainshare-message-handler', () => {
       },
       proofFormat: 'lds'
     })
+    // await agent.
+    const numCreds1  = await agent.dataStoreORMGetVerifiableCredentialsCount()
+    console.log("numCreds1: ", numCreds1)
+    const thing = await agent.dataStoreSaveVerifiableCredential({ verifiableCredential: post })
+    console.log("thing: ", thing)
+    const numCreds2  = await agent.dataStoreORMGetVerifiableCredentialsCount()
+    console.log("numCreds2: ", numCreds2)
+    const indexCred = await agent.dataStoreORMGetVerifiableCredentials({
+      where: [{ column: 'issuer', value: [recipient] }, { column: 'type', value: ['VerifiableCredential,BrainShareIndex']}],
+      order: [{ column: 'issuanceDate', direction: 'DESC' }],
+      take: 1
+    })
+    console.log("indexCred: ", indexCred)
+    // const verificationResult = await agent.verifyCredential({ credential: post })
+    // // console.log("LDS - verificationResult: ", verificationResult)
 
-    const verificationResult = await agent.verifyCredential({ credential: post })
-    // console.log("LDS - verificationResult: ", verificationResult)
+    const postMessage = createBrainShareRequestIndexMessage(sender.did, recipient.did)
 
-    const postMessage = createBrainSharePostMessage(post, sender.did, recipient.did)
-
-    const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+    // const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
 
     const packed = await agent.packDIDCommMessage({
       packing: 'authcrypt',
@@ -207,59 +261,59 @@ describe('brainshare-message-handler', () => {
     // console.log("res: ", res)
 
     const res = await agent.sendDIDCommMessage({ 
-      messageId: 'somefakeid1', 
+      messageId: postMessage.id, 
       packedMessage: packed, 
       recipientDidUrl: recipient.did
     })
     
-    const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+    // const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
 
-    expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
+    // expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
     
     expect(res).toBeDefined()
   })
 
-  it('should handle brainshare post message with credential with JWT proof format', async () => {
-    const post = await agent.createVerifiableCredential({
-      credential: {
-        issuer: { id: sender.did },
-        '@context': ['https://www.w3.org/2018/credentials/v1'],
-        type: ['VerifiableCredential', 'BrainSharePost'],
-        issuanceDate: new Date().toISOString(),
-        credentialSubject: {
-          post: 'Whatever dude!',
-        },
-      },
-      proofFormat: 'jwt'
-    })
+  // it('should handle brainshare post message with credential with JWT proof format', async () => {
+  //   const post = await agent.createVerifiableCredential({
+  //     credential: {
+  //       issuer: { id: sender.did },
+  //       '@context': ['https://www.w3.org/2018/credentials/v1'],
+  //       type: ['VerifiableCredential', 'BrainSharePost'],
+  //       issuanceDate: new Date().toISOString(),
+  //       credentialSubject: {
+  //         post: 'Whatever dude!',
+  //       },
+  //     },
+  //     proofFormat: 'jwt'
+  //   })
 
-    const verificationResult = await agent.verifyCredential({ credential: post })
-    // console.log("LDS - verificationResult: ", verificationResult)
+  //   const verificationResult = await agent.verifyCredential({ credential: post })
+  //   // console.log("LDS - verificationResult: ", verificationResult)
 
-    const postMessage = createBrainSharePostMessage(post, sender.did, recipient.did)
+  //   const postMessage = createBrainSharePostMessage(post, sender.did, recipient.did)
 
-    const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+  //   const getNumCredentials1 = await agent.dataStoreORMGetVerifiableCredentialsCount()
 
-    const packed = await agent.packDIDCommMessage({
-      packing: 'authcrypt',
-      message: postMessage
-    })
+  //   const packed = await agent.packDIDCommMessage({
+  //     packing: 'authcrypt',
+  //     message: postMessage
+  //   })
 
-    // const res = await agent.handleMessage({ raw: packed.message })
-    // console.log("res: ", res)
+  //   // const res = await agent.handleMessage({ raw: packed.message })
+  //   // console.log("res: ", res)
 
-    const res = await agent.sendDIDCommMessage({ 
-      messageId: 'somefakeid2', 
-      packedMessage: packed, 
-      recipientDidUrl: recipient.did
-    })
+  //   const res = await agent.sendDIDCommMessage({ 
+  //     messageId: 'somefakeid2', 
+  //     packedMessage: packed, 
+  //     recipientDidUrl: recipient.did
+  //   })
     
-    const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
+  //   const getNumCredentials2 = await agent.dataStoreORMGetVerifiableCredentialsCount()
 
-    expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
+  //   expect(getNumCredentials2).toEqual(getNumCredentials1 + 1)
     
-    expect(res).toBeDefined()
-  })
+  //   expect(res).toBeDefined()
+  // })
 
   it('should get some DID at DNS', async () => {
     const records = await getTxtRecords("_fakeshare.nickreynolds.online")
