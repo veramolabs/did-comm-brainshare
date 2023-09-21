@@ -244,7 +244,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         // should return problem report
       }
     } else if (message.type === BRAINSHARE_REQUEST_INDEX_MESSAGE_TYPE) {
-      const { from, to } = message
+      const { from, to, returnRoute } = message
       if (!from) {
         throw new Error("invalid_argument: BrainShare Message received without `from` set")
       }
@@ -268,7 +268,15 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
           message: packedResponse.message,
           contentType: DIDCommMessageMediaType.ENCRYPTED,
         }
-        message.addMetaData({ type: 'ReturnRouteResponse', value: JSON.stringify(returnResponse) })
+        if (returnRoute === 'all') {
+          message.addMetaData({ type: 'ReturnRouteResponse', value: JSON.stringify(returnResponse) })
+        } else {
+          await context.agent.sendDIDCommMessage({
+            messageId: returnResponse.id,
+            packedMessage: packedResponse,
+            recipientDidUrl: from
+          })
+        }
       } else {
         // should return problem report
       }
