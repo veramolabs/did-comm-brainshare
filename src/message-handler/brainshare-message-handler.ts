@@ -259,6 +259,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         order: [{ column: 'issuanceDate', direction: 'DESC' }],
         take: 1
       })
+      debug("Index Cred: " + indexCred)
       if (indexCred && indexCred.length > 0) {
         const response = createReturnIndexMessage(indexCred[0].verifiableCredential, indexCred[0].hash, from, to, message.id)
         const packedResponse = await context.agent.packDIDCommMessage({
@@ -270,9 +271,12 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
           message: packedResponse.message,
           contentType: DIDCommMessageMediaType.ENCRYPTED,
         }
+        debug("Return Index Cred packedResponse: " + packedResponse)
         if (returnRoute === 'all') {
+          debug("re-use transport")
           message.addMetaData({ type: 'ReturnRouteResponse', value: JSON.stringify(returnResponse) })
         } else {
+          debug("send new DIDComm Message")
           await context.agent.sendDIDCommMessage({
             messageId: returnResponse.id,
             packedMessage: packedResponse,
