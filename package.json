@@ -1,6 +1,6 @@
 {
   "name": "did-comm-brainshare",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "source": "src/index.ts",
   "main": "build/index.js",
   "exports": {
