@@ -198,7 +198,7 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
       const records = await getTxtRecords("_brainshare." + data.domain)
 
       debug("Records found: " + records)
-      if (records && records.length > 0 && (records[0] as string).includes(from)) {
+      if (records && records.length > 0 && records[0].length > 0 && (records[0][0] as string).includes(from)) {
         // TODO: delete any old creds
         debug("Record matches. DID = " + from)
         // create & save BrainShareDomainLinkageCredential
