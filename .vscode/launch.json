@@ -49,6 +49,19 @@
       },
       "sourceMaps": true,
       "resolveSourceMapLocations": ["${workspaceFolder}/**", "**/node_modules/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest: current file",
+      "env": { "NODE_OPTIONS": "--experimental-vm-modules --experimental-import-meta-resolve" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/jest/bin/jest.js", "--runInBand", "--coverage", "false", "-c", "${workspaceFolder}/jest.config.mjs", "${fileBasenameNoExtension}"],
+      "console": "integratedTerminal",
+      "disableOptimisticBPs": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      }
     }
   ]
 }
