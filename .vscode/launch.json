@@ -4,6 +4,9 @@
     {
       "type": "node",
       "request": "launch",
+      "env": { 
+        "DEBUG": "veramo*",
+      },
       "name": "debug OpenAPI server",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/node_modules/@veramo/cli/bin/veramo.js",
@@ -54,7 +57,10 @@
       "type": "node",
       "request": "launch",
       "name": "Jest: current file",
-      "env": { "NODE_OPTIONS": "--experimental-vm-modules --experimental-import-meta-resolve" },
+      "env": { 
+        "DEBUG": "veramo*",
+        "NODE_OPTIONS": "--experimental-vm-modules --experimental-import-meta-resolve" 
+      },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--inspect-brk", "${workspaceRoot}/node_modules/jest/bin/jest.js", "--runInBand", "--coverage", "false", "-c", "${workspaceFolder}/jest.config.mjs", "${fileBasenameNoExtension}"],
       "console": "integratedTerminal",
