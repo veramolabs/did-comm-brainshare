@@ -1,4 +1,4 @@
-import { IAgentContext, ICredentialPlugin, IDIDManager, IDataStore, IDataStoreORM, IKeyManager, VerifiableCredential } from '@veramo/core-types'
+import { IAgentContext, ICredentialPlugin, IDIDManager, IDataStore, IDataStoreORM, IKeyManager, UniqueVerifiableCredential, VerifiableCredential } from '@veramo/core-types'
 import { AbstractMessageHandler, Message } from '@veramo/message-handler'
 import Debug from 'debug'
 import { v4 } from 'uuid'
@@ -17,12 +17,7 @@ export const BRAINSHARE_POST_MESSAGE_TYPE = 'https://veramo.io/didcomm/brainshar
 /**
  * @beta
  */
-export const BRAINSHARE_REQUEST_INDEX_MESSAGE_TYPE = 'https://veramo.io/didcomm/brainshare/1.0/request-index'
-
-/**
- * @beta
- */
-export const BRAINSHARE_RETURN_INDEX_MESSAGE_TYPE = 'https://veramo.io/didcomm/brainshare/1.0/return-index'
+export const BRAINSHARE_REQUEST_POST_MESSAGE_TYPE = 'https://veramo.io/didcomm/brainshare/1.0/request-post'
 
 /**
  * @beta
@@ -72,13 +67,15 @@ export function createBrainShareCheckDomainLinkageMessage(domain: string, sender
 /**
  * @beta
  */
-export function createBrainShareRequestIndexMessage(senderDidUrl: string, recipientDidUrl: string): IDIDCommMessage {
+export function createBrainShareRequestPostMessage(title: string, senderDidUrl: string, recipientDidUrl: string): IDIDCommMessage {
   return {
-    type: BRAINSHARE_REQUEST_INDEX_MESSAGE_TYPE,
+    type: BRAINSHARE_REQUEST_POST_MESSAGE_TYPE,
     from: senderDidUrl,
     to: recipientDidUrl,
     id: v4(),
-    body: {},
+    body: {
+      title
+    },
     return_route: 'all'
   }
 }
@@ -102,33 +99,14 @@ export function createBrainShareRequestCredentialMessage(credentialHash: string,
 /**
  * @beta
  */
-export function createReturnIndexMessage(index: VerifiableCredential, hash: string, senderDidUrl: string, recipientDidUrl: string, thid: string): IDIDCommMessage {
+export function createReturnCredentialMessage(body: UniqueVerifiableCredential, senderDidUrl: string, recipientDidUrl: string, thid: string): IDIDCommMessage {
   return {
-    type: BRAINSHARE_RETURN_INDEX_MESSAGE_TYPE,
+    type: BRAINSHARE_RETURN_CREDENTIAL_MESSAGE_TYPE,
     from: senderDidUrl,
     to: recipientDidUrl,
     id: v4(),
     thid,
-    body: { 
-      index,
-      hash
-    }
-  }
-}
-
-/**
- * @beta
- */
-export function createReturnCredentialMessage(credential: VerifiableCredential, senderDidUrl: string, recipientDidUrl: string, thid: string): IDIDCommMessage {
-  return {
-    type: BRAINSHARE_RETURN_INDEX_MESSAGE_TYPE,
-    from: senderDidUrl,
-    to: recipientDidUrl,
-    id: v4(),
-    thid,
-    body: { 
-      credential 
-    }
+    body
   }
 }
 
@@ -228,9 +206,12 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         throw new Error("invalid_argument: BrainShare Message received without `to` set")
       }
 
-      const cred = await context.agent.dataStoreGetVerifiableCredential({ hash: data.hash })
-      if (cred && cred.credentialSubject.shouldBeIndexed) {
-        const response = createReturnCredentialMessage(cred, to, from, message.id)
+      const verifiableCredential = await context.agent.dataStoreGetVerifiableCredential({ hash: data.hash })
+      if (verifiableCredential?.credentialSubject?.isPublic) {
+        const response = createReturnCredentialMessage({
+          hash: data.hash, 
+          verifiableCredential
+        }, to, from, message.id)
         const packedResponse = await context.agent.packDIDCommMessage({
           message: response,
           packing: 'authcrypt',
@@ -244,9 +225,8 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
       } else {
         // should return problem report
       }
-    } else if (message.type === BRAINSHARE_REQUEST_INDEX_MESSAGE_TYPE) {
-      const { from, to, returnRoute } = message
-      debug("Index Requested. Recipient: " + to)
+    } else if (message.type === BRAINSHARE_REQUEST_POST_MESSAGE_TYPE) {
+      const { from, to, data } = message
       if (!from) {
         throw new Error("invalid_argument: BrainShare Message received without `from` set")
       }
@@ -254,40 +234,29 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
         throw new Error("invalid_argument: BrainShare Message received without `to` set")
       }
 
-      const numCreds1  = await context.agent.dataStoreORMGetVerifiableCredentialsCount()
-      const indexCred = await context.agent.dataStoreORMGetVerifiableCredentials({
-        where: [{ column: 'issuer', value: [to] }, { column: 'type', value: ['VerifiableCredential,BrainShareIndex']}],
+      const credentials = await context.agent.dataStoreORMGetVerifiableCredentialsByClaims({ 
+        where: [
+          { column: 'credentialType', value: ['VerifiableCredential,BrainSharePost'] },
+          { column: 'issuer', value: [to] },
+          { column: 'type', value: ['title'] },
+          { column: 'value', value: [data.title] },
+        ],
         order: [{ column: 'issuanceDate', direction: 'DESC' }],
         take: 1
       })
-      debug("Index Cred: " + indexCred)
-      if (indexCred && indexCred.length > 0) {
-        debug("indexCred[0]: " + indexCred[0])
-        debug("JSON.stringify(indexCred[0]): " + JSON.stringify(indexCred[0]))
-        const response = createReturnIndexMessage(indexCred[0].verifiableCredential, indexCred[0].hash, to, from, message.id)
-        debug("Response: " + JSON.stringify(response))
+      const credential = credentials[0]
+      if (credential?.verifiableCredential?.credentialSubject?.isPublic) {
+        const response = createReturnCredentialMessage(credential, to, from, message.id)
         const packedResponse = await context.agent.packDIDCommMessage({
           message: response,
           packing: 'authcrypt',
         })
-        debug("Packed Response: " + JSON.stringify(response))
         const returnResponse = {
           id: response.id,
           message: packedResponse.message,
           contentType: DIDCommMessageMediaType.ENCRYPTED,
         }
-        debug("Return Index Cred packedResponse: " + packedResponse)
-        if (returnRoute === 'all') {
-          debug("re-use transport")
-          message.addMetaData({ type: 'ReturnRouteResponse', value: JSON.stringify(returnResponse) })
-        } else {
-          debug("send new DIDComm Message")
-          await context.agent.sendDIDCommMessage({
-            messageId: returnResponse.id,
-            packedMessage: packedResponse,
-            recipientDidUrl: from
-          })
-        }
+        message.addMetaData({ type: 'ReturnRouteResponse', value: JSON.stringify(returnResponse) })      
       } else {
         // should return problem report
       }

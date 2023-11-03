@@ -8,7 +8,7 @@
 version: 3.0
 
 constants:
-  baseUrl: http://localhost:3335
+  baseUrl: https://changeme.ngrok.app
   port: 3335
   huggingFaceToken: faketoken1
 # please use your own X25519 key, this is only an example
@@ -45,6 +45,7 @@ constants:
     - dataStoreSaveMessage
     - dataStoreGetVerifiableCredential
     - dataStoreSaveVerifiableCredential
+    - dataStoreDeleteVerifiableCredential
     - dataStoreGetVerifiablePresentation
     - dataStoreSaveVerifiablePresentation
     - dataStoreORMGetIdentifiers
@@ -61,12 +62,14 @@ constants:
     - packDIDCommMessage
     - unpackDIDCommMessage
     - sendDIDCommMessage
-    - sendMessageDIDCommAlpha1
-    - createVerifiablePresentation
     - createVerifiableCredential
+    - createVerifiablePresentation
+    - verifyCredential
+    - verifyPresentation
     - createSelectiveDisclosureRequest
     - getVerifiableCredentialsForSdr
     - validatePresentationAgainstSdr
+    - listUsableProofFormats
 
 # Database
 dbConnection:
@@ -91,7 +94,7 @@ server:
     $ref: /constants/port
   use:
     # CORS
-    - - $require: 'cors'
+    - - $require: "cors?t=function#default"
 
     # Add agent to the request object
     - - $require: '@veramo/remote-server?t=function#RequestWithAgentRouter'
@@ -125,7 +128,7 @@ server:
     - - /open-api.json
       - $require: '@veramo/remote-server?t=function#ApiSchemaRouter'
         $args:
-          - basePath: :3335/agent
+          - basePath: /agent
             securityScheme: bearer
             apiName: Agent
             apiVersion: '1.0.0'
@@ -161,10 +164,7 @@ messageHandler:
         - $require: '@veramo/did-jwt#JwtMessageHandler'
         - $require: '@veramo/credential-w3c#W3cMessageHandler'
         - $require: '@veramo/selective-disclosure#SdrMessageHandler'
-        - $require: './build#BrainShareMessageHandler'
-          $args: 
-            - hfToken: 
-              $ref: /constants/huggingFaceToken
+        - $require: './build/index.js#BrainShareMessageHandler'
 
 # DID resolvers
 didResolver:
@@ -177,6 +177,8 @@ didResolver:
               $ref: /ethr-did-resolver
             web:
               $ref: /web-did-resolver
+            key:
+              $ref: /did-key-resolver
             peer:
               $ref: /did-peer-resolver
             elem:
@@ -195,6 +197,9 @@ ethr-did-resolver:
 
 web-did-resolver:
   $require: web-did-resolver?t=function&p=/web#getResolver
+
+did-key-resolver:
+  $require: '@veramo/did-provider-key?t=function&p=/key#getDidKeyResolver'
 
 universal-resolver:
   $require: '@veramo/did-resolver#UniversalResolver'
