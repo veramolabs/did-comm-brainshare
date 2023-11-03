@@ -1,6 +1,6 @@
 {
   "name": "@veramo-community/did-comm-brainshare",
-  "version": "1.0.11",
+  "version": "1.0.0",
   "source": "src/index.ts",
   "main": "build/index.js",
   "exports": {
