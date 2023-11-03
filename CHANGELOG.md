@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/veramolabs/did-comm-brainshare/compare/1.0.0...1.0.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* npm release ([64cbfb3](https://github.com/veramolabs/did-comm-brainshare/commit/64cbfb33f60b89089a74ce91df37a068ae66a061))
+
 # 1.0.0 (2023-11-03)
 
 
