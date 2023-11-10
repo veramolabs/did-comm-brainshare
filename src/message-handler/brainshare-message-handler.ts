@@ -131,7 +131,6 @@ export async function getTxtRecords(domain: string): Promise<any> {
 export class BrainShareMessageHandler extends AbstractMessageHandler {
   constructor() {
     super()
-    console.log('BrainShareMessageHandler constructor')
   }
 
   /**
