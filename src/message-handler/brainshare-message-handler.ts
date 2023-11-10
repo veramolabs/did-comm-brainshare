@@ -4,6 +4,10 @@ import Debug from 'debug'
 import { v4 } from 'uuid'
 import { DIDCommMessageMediaType, IDIDComm, IDIDCommMessage } from '@veramo/did-comm'
 import * as dns from 'dns'
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import { visit } from 'unist-util-visit';
+import { normalizeCredential } from 'did-jwt-vc'
 
 const debug = Debug('veramo:did-comm:brainshare-message-handler')
 
@@ -134,6 +138,32 @@ export class BrainShareMessageHandler extends AbstractMessageHandler {
    * https://github.com/veramolabs/BrainShareProtocol/
    */
   public async handle(message: Message, context: IContext): Promise<Message> {
+    if (message.type === 'https://didcomm.org/basicmessage/2.0/message') {
+      const credentials: VerifiableCredential[] = []
+      const { content } = message.data
+      const processor = unified().use(remarkParse);
+
+      const ast = processor.parse(content);
+      visit(ast, 'code', (node) => {
+        try {
+          switch (node.lang) {
+            case 'vc+jwt':
+              const credential = normalizeCredential(String(node.value).replace(/\s/g, ''))
+              credentials.push(credential)
+              break;
+            case 'vc+json':
+              const credential2 = JSON.parse(String(node.value))
+              credentials.push(credential2)
+              break;
+            }
+        } catch (e) {
+          debug("Error parsing credential", e)
+        }
+      });
+      
+      message.credentials = credentials
+
+    }
     if (message.type === BRAINSHARE_POST_MESSAGE_TYPE) {
       debug('BrainShare Post Message Received')
       try {
