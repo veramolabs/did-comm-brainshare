@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/veramolabs/did-comm-brainshare/compare/1.0.1...1.1.0) (2023-11-10)
+
+
+### Features
+
+* parse credentials in a basic message ([#2](https://github.com/veramolabs/did-comm-brainshare/issues/2)) ([d87d548](https://github.com/veramolabs/did-comm-brainshare/commit/d87d548a0f0d5fd168d819ccefe4e2798adece63))
+
 ## [1.0.1](https://github.com/veramolabs/did-comm-brainshare/compare/1.0.0...1.0.1) (2023-11-03)
 
 
